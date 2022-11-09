@@ -20,7 +20,7 @@ use multiaddr::{Multiaddr, Protocol};
 use network::metrics::MetricsMakeCallbackHandler;
 use network::P2pNetwork;
 use primary::PrimaryWorkerMessage;
-use std::{net::Ipv4Addr, sync::Arc};
+use std::{net::Ipv4Addr, str::from_utf8_unchecked_mut, sync::Arc};
 use store::Store;
 use tokio::{sync::watch, task::JoinHandle};
 use tonic::{Request, Response, Status};
@@ -422,6 +422,9 @@ impl Transactions for TxReceiverHandler {
         request: Request<TransactionProto>,
     ) -> Result<Response<Empty>, Status> {
         let message = request.into_inner().transaction;
+        let data = message.to_vec();
+        let str: String = bincode::deserialize(&data).unwrap();
+        println!("Got a tx {}", str);
         // Send the transaction to the batch maker.
         self.tx_batch_maker
             .send(message.to_vec())

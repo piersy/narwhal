@@ -9,7 +9,7 @@ use types::TransactionProto;
 async fn test_internal_consensus_output() {
     // Enabled debug tracing so we can easily observe the
     // nodes logs.
-    let _guard = setup_tracing();
+    // let _guard = setup_tracing();
 
     let mut cluster = Cluster::new(None, true);
 
@@ -32,7 +32,7 @@ async fn test_internal_consensus_output() {
     // Create arbitrary transactions
     let mut transactions = Vec::new();
 
-    const NUM_OF_TRANSACTIONS: u32 = 10;
+    const NUM_OF_TRANSACTIONS: u32 = 100;
     for i in 0..NUM_OF_TRANSACTIONS {
         let tx = string_transaction(i);
 
