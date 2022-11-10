@@ -442,6 +442,9 @@ impl Transactions for TxReceiverHandler {
         let mut transactions = request.into_inner();
 
         while let Some(Ok(txn)) = transactions.next().await {
+            let data = txn.transaction.to_vec();
+            let str: String = bincode::deserialize(&data).unwrap();
+            println!("Got a streamed tx {}", str);
             // Send the transaction to the batch maker.
             self.tx_batch_maker
                 .send(txn.transaction.to_vec())
