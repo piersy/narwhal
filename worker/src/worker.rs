@@ -29,8 +29,9 @@ use tracing::info;
 use types::{
     error::DagError,
     metered_channel::{channel, Receiver, Sender},
-    Batch, BatchDigest, Empty, PrimaryToWorkerServer, ReconfigureNotification, Transaction,
-    TransactionProto, Transactions, TransactionsServer, WorkerPrimaryMessage, WorkerToWorkerServer,
+    Batch, BatchDigest, Empty, PrimaryToWorkerServer, ReconfigureNotification,
+    StateRootTransactionProto, Transaction, TransactionProto, Transactions, TransactionsServer,
+    WorkerPrimaryMessage, WorkerToWorkerServer,
 };
 
 #[cfg(test)]
@@ -432,6 +433,25 @@ impl Transactions for TxReceiverHandler {
             .map_err(|_| DagError::ShuttingDown)
             .map_err(|e| Status::not_found(e.to_string()))?;
 
+        Ok(Response::new(Empty {}))
+    }
+
+    async fn submit_state_root_transaction(
+        &self,
+        request: Request<StateRootTransactionProto>,
+    ) -> Result<Response<Empty>, Status> {
+        // let message = request.into_inner().transaction;
+        // let data = message.to_vec();
+        // let str: String = bincode::deserialize(&data).unwrap();
+        // println!("Got a tx {}", str);
+        // // Send the transaction to the batch maker.
+        // self.tx_batch_maker
+        //     .send(message.to_vec())
+        //     .await
+        //     .map_err(|_| DagError::ShuttingDown)
+        //     .map_err(|e| Status::not_found(e.to_string()))?;
+
+        // Ok(Response::new(Empty {}))
         Ok(Response::new(Empty {}))
     }
 

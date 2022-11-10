@@ -40,7 +40,8 @@ pub use narwhal::{
     GetPrimaryAddressResponse, MultiAddr as MultiAddrProto, NewEpochRequest, NewNetworkInfoRequest,
     NodeReadCausalRequest, NodeReadCausalResponse, PublicKey as PublicKeyProto, ReadCausalRequest,
     ReadCausalResponse, RemoveCollectionsRequest, RoundsRequest, RoundsResponse,
-    Transaction as TransactionProto, ValidatorData,
+    StateRootTransaction as StateRootTransactionProto, Transaction as TransactionProto,
+    ValidatorData,
 };
 
 impl From<PublicKey> for PublicKeyProto {
