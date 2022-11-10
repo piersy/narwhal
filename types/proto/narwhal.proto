@@ -9,8 +9,19 @@ message CertificateDigest {
     bytes digest = 1;
 }
 
-message Transaction {
+message NormalTransaction {
     bytes transaction = 1;
+}
+
+message StateRootTransaction {
+    bytes state_root = 1;
+    bytes signature = 2;
+
+}
+
+message Transaction {
+    NormalTransaction normal_transaction = 1;
+    StateRootTransaction state_root_transaction = 2;
 }
 
 message CollectionError {
@@ -154,6 +165,9 @@ service Configuration {
 service Transactions {
     // Submit a Transactions
     rpc SubmitTransaction(Transaction) returns (Empty) {}
+
+    // Submit a Transactions
+    // rpc SubmitStateRootTransaction(StateRootTransaction) returns (Empty) {}
 
     // Submit a Transactions
     rpc SubmitTransactionStream(stream Transaction) returns (Empty) {}
