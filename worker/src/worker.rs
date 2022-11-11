@@ -15,7 +15,7 @@ use anemo_tower::{callback::CallbackLayer, trace::TraceLayer};
 use async_trait::async_trait;
 use config::{Parameters, SharedCommittee, SharedWorkerCache, WorkerId};
 use crypto::{traits::KeyPair as _, NetworkKeyPair, PublicKey, Signature};
-use fastcrypto::{Verifier, traits::ToFromBytes};
+use fastcrypto::{traits::ToFromBytes, Verifier};
 use futures::StreamExt;
 use multiaddr::{Multiaddr, Protocol};
 use network::metrics::MetricsMakeCallbackHandler;
@@ -298,10 +298,11 @@ impl Worker {
         let address = address
             .replace(0, |_protocol| Some(Protocol::Ip4(Ipv4Addr::UNSPECIFIED)))
             .unwrap();
-        let tx_receiver_handle = TxReceiverHandler { 
-            tx_batch_maker: tx_batch_maker, 
+        let tx_receiver_handle = TxReceiverHandler {
+            tx_batch_maker: tx_batch_maker,
             primary_name: self.primary_name.clone(),
-        }.spawn(
+        }
+        .spawn(
             address.clone(),
             tx_reconfigure.subscribe(),
             endpoint_metrics,
@@ -445,7 +446,6 @@ impl Transactions for TxReceiverHandler {
         &self,
         request: Request<StateRootTransactionProto>,
     ) -> Result<Response<Empty>, Status> {
-
         let req_inner = request.into_inner();
         let tx_message = req_inner.state_root;
         let tx_data = tx_message.to_vec();

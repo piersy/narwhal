@@ -1,8 +1,8 @@
 use bytes::Bytes;
 //use telemetry_subscribers::TelemetryGuards;
+use fastcrypto::traits::{Signer, ToFromBytes};
 use test_utils::cluster::Cluster;
 use types::StateRootTransactionProto;
-use fastcrypto::traits::{Signer, ToFromBytes};
 
 #[tokio::test]
 async fn test_internal_consensus_output_state_root() {
@@ -37,9 +37,9 @@ async fn test_internal_consensus_output_state_root() {
 
         // serialise and send
         let tr = bincode::serialize(&tx).unwrap();
-        let sig = authority.key_pair.try_sign(&tr).unwrap(); 
+        let sig = authority.key_pair.try_sign(&tr).unwrap();
         let sig_alt_bytes = (*sig.as_bytes()).to_vec();
-    
+
         let txn = StateRootTransactionProto {
             state_root: Bytes::from(tr.clone()),
             signature: Bytes::from(sig_alt_bytes),

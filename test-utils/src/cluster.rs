@@ -498,7 +498,6 @@ pub struct AuthorityDetails {
 }
 
 impl Clone for AuthorityDetails {
-    
     fn clone(&self) -> Self {
         // println!("self pkey {:?}", self.private_key);
         // let pkey = self.private_key.privkey.clone();
@@ -508,10 +507,9 @@ impl Clone for AuthorityDetails {
             id: self.id.clone(),
             name: self.name.clone(),
             key_pair: self.key_pair.copy(),
-            internal: self.internal.clone(), 
+            internal: self.internal.clone(),
         }
     }
-
 }
 
 struct AuthorityDetailsInternal {
