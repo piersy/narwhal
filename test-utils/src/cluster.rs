@@ -3,9 +3,9 @@
 use crate::{temp_dir, CommitteeFixture};
 use arc_swap::ArcSwap;
 use config::{Parameters, SharedCommittee, SharedWorkerCache, WorkerId};
-use crypto::{KeyPair, NetworkKeyPair, PublicKey};
+use crypto::{KeyPair, NetworkKeyPair, PublicKey, PrivateKey};
 use executor::SerializedTransaction;
-use fastcrypto::traits::KeyPair as _;
+use fastcrypto::traits::{KeyPair as _, ToFromBytes};
 use itertools::Itertools;
 use multiaddr::Multiaddr;
 use node::{
@@ -490,11 +490,28 @@ impl WorkerNodeDetails {
 /// internals are thread safe. So changes made from one instance will be
 /// reflected to another.
 #[allow(dead_code)]
-#[derive(Clone)]
 pub struct AuthorityDetails {
     pub id: usize,
     pub name: PublicKey,
+    pub key_pair: KeyPair,
     internal: Arc<RwLock<AuthorityDetailsInternal>>,
+}
+
+impl Clone for AuthorityDetails {
+    
+    fn clone(&self) -> Self {
+        // println!("self pkey {:?}", self.private_key);
+        // let pkey = self.private_key.privkey.clone();
+        // println!("pkey {:?}", pkey);
+        // let pkey_cloned = PrivateKey::from(pkey);
+        AuthorityDetails {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            key_pair: self.key_pair.copy(),
+            internal: self.internal.clone(), 
+        }
+    }
+
 }
 
 struct AuthorityDetailsInternal {
@@ -514,11 +531,16 @@ impl AuthorityDetails {
         worker_cache: SharedWorkerCache,
         internal_consensus_enabled: bool,
     ) -> Self {
+        // println!("AuthorityDetails pkey {:?}", key_pair.private());
+        let kp_copy = key_pair.copy();
+        // let pkey = key_pair.private().bytes.clone();
+        // let pkey_cloned = PrivateKey::from_bytes(&pkey.into_inner().unwrap()).unwrap();
+
         // Create all the nodes we have in the committee
-        let name = key_pair.public().clone();
+        let name = kp_copy.public().clone();
         let primary = PrimaryNodeDetails::new(
             id,
-            key_pair,
+            kp_copy,
             network_key_pair,
             parameters.clone(),
             committee.clone(),
@@ -547,10 +569,10 @@ impl AuthorityDetails {
             worker_keypairs,
             workers,
         };
-
         Self {
             id,
             name,
+            key_pair: key_pair.copy(),
             internal: Arc::new(RwLock::new(internal)),
         }
     }

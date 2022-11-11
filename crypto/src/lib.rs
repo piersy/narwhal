@@ -32,6 +32,7 @@ pub type AggregateSignature = bls12381::BLS12381AggregateSignature;
 pub type PrivateKey = bls12381::BLS12381PrivateKey;
 pub type KeyPair = bls12381::BLS12381KeyPair;
 
+
 // Example to use BLS12-377 instead:
 // #[cfg(feature = "celo")]
 // pub type PublicKey = bls12377::BLS12377PublicKey;

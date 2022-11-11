@@ -14,7 +14,8 @@ use anemo::{types::PeerInfo, PeerId};
 use anemo_tower::{callback::CallbackLayer, trace::TraceLayer};
 use async_trait::async_trait;
 use config::{Parameters, SharedCommittee, SharedWorkerCache, WorkerId};
-use crypto::{traits::KeyPair as _, NetworkKeyPair, PublicKey};
+use crypto::{traits::KeyPair as _, NetworkKeyPair, PublicKey, Signature};
+use fastcrypto::{Verifier, traits::ToFromBytes};
 use futures::StreamExt;
 use multiaddr::{Multiaddr, Protocol};
 use network::metrics::MetricsMakeCallbackHandler;
@@ -297,7 +298,10 @@ impl Worker {
         let address = address
             .replace(0, |_protocol| Some(Protocol::Ip4(Ipv4Addr::UNSPECIFIED)))
             .unwrap();
-        let tx_receiver_handle = TxReceiverHandler { tx_batch_maker }.spawn(
+        let tx_receiver_handle = TxReceiverHandler { 
+            tx_batch_maker: tx_batch_maker, 
+            primary_name: self.primary_name.clone(),
+        }.spawn(
             address.clone(),
             tx_reconfigure.subscribe(),
             endpoint_metrics,
@@ -379,6 +383,7 @@ impl Worker {
 #[derive(Clone)]
 struct TxReceiverHandler {
     tx_batch_maker: Sender<Transaction>,
+    primary_name: PublicKey,
 }
 
 impl TxReceiverHandler {
@@ -440,18 +445,25 @@ impl Transactions for TxReceiverHandler {
         &self,
         request: Request<StateRootTransactionProto>,
     ) -> Result<Response<Empty>, Status> {
-        // let message = request.into_inner().transaction;
-        // let data = message.to_vec();
-        // let str: String = bincode::deserialize(&data).unwrap();
-        // println!("Got a tx {}", str);
-        // // Send the transaction to the batch maker.
-        // self.tx_batch_maker
-        //     .send(message.to_vec())
-        //     .await
-        //     .map_err(|_| DagError::ShuttingDown)
-        //     .map_err(|e| Status::not_found(e.to_string()))?;
 
-        // Ok(Response::new(Empty {}))
+        let req_inner = request.into_inner();
+        let tx_message = req_inner.state_root;
+        let tx_data = tx_message.to_vec();
+        let tx_str: String = bincode::deserialize(&tx_data).unwrap();
+
+        let sig_message = req_inner.signature;
+        let sig: Signature = Signature::from_bytes(&sig_message.to_vec()).unwrap();
+        self.primary_name.verify(&tx_data, &sig).unwrap();
+  //      let sig_data = sig_message.to_vec();
+    //    let sig_str: String = bincode::deserialize(&tx_data).unwrap();
+        println!("Got a tx {} with signature {:?}", tx_str, sig_message);
+        // Send the transaction to the batch maker.
+        self.tx_batch_maker
+            .send(tx_message.to_vec())
+            .await
+            .map_err(|_| DagError::ShuttingDown)
+            .map_err(|e| Status::not_found(e.to_string()))?;
+
         Ok(Response::new(Empty {}))
     }
 
