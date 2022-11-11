@@ -1,12 +1,8 @@
 use bytes::Bytes;
-use telemetry_subscribers::TelemetryGuards;
+//use telemetry_subscribers::TelemetryGuards;
 use test_utils::cluster::Cluster;
-use types::{TransactionProto, StateRootTransactionProto};
+use types::StateRootTransactionProto;
 use fastcrypto::traits::{Signer, ToFromBytes};
-use crypto::Signature;
-//     BLS12377AggregateSignature, BLS12377KeyPair, BLS12377PrivateKey, BLS12377PublicKey,
-//     BLS12377PublicKeyBytes, BLS12377Signature,
-// };
 
 #[tokio::test]
 async fn test_internal_consensus_output_state_root() {
@@ -42,13 +38,8 @@ async fn test_internal_consensus_output_state_root() {
         // serialise and send
         let tr = bincode::serialize(&tx).unwrap();
         let sig = authority.key_pair.try_sign(&tr).unwrap(); 
-        println!("sig {:?}", sig);
         let sig_alt_bytes = (*sig.as_bytes()).to_vec();
-        println!("sig alt bytes {:?}", sig_alt_bytes);
     
-        
-        // let sig_bytes = sig.as_bytes().cop;
-        // let sig_bytes = sig.bytes.clone().into_inner().unwrap().to_vec();
         let txn = StateRootTransactionProto {
             state_root: Bytes::from(tr.clone()),
             signature: Bytes::from(sig_alt_bytes),
@@ -85,7 +76,7 @@ fn string_transaction(id: u32) -> String {
     format!("test transaction:{id}")
 }
 
-fn setup_tracing() -> TelemetryGuards {
+/*fn setup_tracing() -> TelemetryGuards {
     // Setup tracing
     let tracing_level = "debug";
     let network_tracing_level = "info";
@@ -99,4 +90,4 @@ fn setup_tracing() -> TelemetryGuards {
         .with_log_level(&log_filter)
         .init()
         .0
-}
+}*/

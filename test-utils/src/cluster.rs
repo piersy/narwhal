@@ -3,9 +3,9 @@
 use crate::{temp_dir, CommitteeFixture};
 use arc_swap::ArcSwap;
 use config::{Parameters, SharedCommittee, SharedWorkerCache, WorkerId};
-use crypto::{KeyPair, NetworkKeyPair, PublicKey, PrivateKey};
+use crypto::{KeyPair, NetworkKeyPair, PublicKey};
 use executor::SerializedTransaction;
-use fastcrypto::traits::{KeyPair as _, ToFromBytes};
+use fastcrypto::traits::KeyPair as _;
 use itertools::Itertools;
 use multiaddr::Multiaddr;
 use node::{

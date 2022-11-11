@@ -21,7 +21,7 @@ use multiaddr::{Multiaddr, Protocol};
 use network::metrics::MetricsMakeCallbackHandler;
 use network::P2pNetwork;
 use primary::PrimaryWorkerMessage;
-use std::{net::Ipv4Addr, str::from_utf8_unchecked_mut, sync::Arc};
+use std::{net::Ipv4Addr, sync::Arc};
 use store::Store;
 use tokio::{sync::watch, task::JoinHandle};
 use tonic::{Request, Response, Status};
@@ -454,9 +454,7 @@ impl Transactions for TxReceiverHandler {
         let sig_message = req_inner.signature;
         let sig: Signature = Signature::from_bytes(&sig_message.to_vec()).unwrap();
         self.primary_name.verify(&tx_data, &sig).unwrap();
-  //      let sig_data = sig_message.to_vec();
-    //    let sig_str: String = bincode::deserialize(&tx_data).unwrap();
-        println!("Got a tx {} with signature {:?}", tx_str, sig_message);
+        println!("Got a tx {} with correct signature", tx_str);
         // Send the transaction to the batch maker.
         self.tx_batch_maker
             .send(tx_message.to_vec())

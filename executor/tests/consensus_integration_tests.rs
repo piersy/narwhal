@@ -1,7 +1,7 @@
 // Copyright (c) 2022, Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 use bytes::Bytes;
-use telemetry_subscribers::TelemetryGuards;
+//use telemetry_subscribers::TelemetryGuards;
 use test_utils::cluster::Cluster;
 use types::TransactionProto;
 
@@ -73,7 +73,7 @@ fn string_transaction(id: u32) -> String {
     format!("test transaction:{id}")
 }
 
-fn setup_tracing() -> TelemetryGuards {
+/*fn setup_tracing() -> TelemetryGuards {
     // Setup tracing
     let tracing_level = "debug";
     let network_tracing_level = "info";
@@ -87,4 +87,4 @@ fn setup_tracing() -> TelemetryGuards {
         .with_log_level(&log_filter)
         .init()
         .0
-}
+}*/
