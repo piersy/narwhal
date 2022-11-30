@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::{sync::Arc, time::Duration};
 
+// use futures_core::stream::Stream;
+
 use crate::{
     block_synchronizer::handler::Handler, block_waiter::GetBlockResponse, BlockCommand,
     BlockRemoverCommand,
 };
+use async_stream;
 use consensus::dag::Dag;
 use tokio::{
-    sync::{mpsc::channel, oneshot},
+    sync::{mpsc::channel, oneshot, watch},
     time::timeout,
 };
+use tokio_stream::{wrappers::WatchStream, StreamExt};
 use tonic::{Request, Response, Status};
 use types::{
     metered_channel::Sender, BlockError, BlockRemoverErrorKind, CertificateDigest,
@@ -22,6 +26,7 @@ use types::{
 pub struct NarwhalValidator<SynchronizerHandler: Handler + Send + Sync + 'static> {
     tx_get_block_commands: Sender<BlockCommand>,
     tx_block_removal_commands: Sender<BlockRemoverCommand>,
+    tx_confirmed_leaders: &'static watch::Sender<CertificateDigest>,
     get_collections_timeout: Duration,
     remove_collections_timeout: Duration,
     block_synchronizer_handler: Arc<SynchronizerHandler>,
@@ -32,6 +37,7 @@ impl<SynchronizerHandler: Handler + Send + Sync + 'static> NarwhalValidator<Sync
     pub fn new(
         tx_get_block_commands: Sender<BlockCommand>,
         tx_block_removal_commands: Sender<BlockRemoverCommand>,
+        tx_confirmed_leaders: &watch::Sender<CertificateDigest>,
         get_collections_timeout: Duration,
         remove_collections_timeout: Duration,
         block_synchronizer_handler: Arc<SynchronizerHandler>,
@@ -40,6 +46,7 @@ impl<SynchronizerHandler: Handler + Send + Sync + 'static> NarwhalValidator<Sync
         Self {
             tx_get_block_commands,
             tx_block_removal_commands,
+            tx_confirmed_leaders,
             get_collections_timeout,
             remove_collections_timeout,
             block_synchronizer_handler,
@@ -172,6 +179,34 @@ impl<SynchronizerHandler: Handler + Send + Sync + 'static> Validator
             ))
         };
         get_collections_response.map(Response::new)
+    }
+
+    type SubscribeSequencedCollectionsStream = std::pin::Pin<
+        Box<
+            dyn futures::Stream<Item = Result<CertificateDigestProto, tonic::Status>>
+                + Send
+                + 'static,
+        >,
+    >;
+
+    /// Subscribes to a stream of collection ids which have been sequenced by consensus.
+    async fn subscribe_sequenced_collections(
+        &self,
+        _: Request<Empty>,
+    ) -> Result<Response<<Self as Validator>::SubscribeSequencedCollectionsStream>, Status> {
+        let mut stream = WatchStream::new(self.tx_confirmed_leaders.subscribe());
+
+        let output = async_stream::try_stream! {
+            while let d = stream.next().await {
+                let res : types::CertificateDigestProto = d.unwrap().into();
+                yield res;
+            }
+        };
+        let _: &dyn futures::Stream<Item = Result<_, tonic::Status>> = &output;
+
+        Ok(Response::new(
+            Box::pin(output) as Self::SubscribeSequencedCollectionsStream
+        ))
     }
 }
 

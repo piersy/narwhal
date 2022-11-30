@@ -40,16 +40,16 @@ use prometheus::Registry;
 use std::{collections::BTreeMap, net::Ipv4Addr, sync::Arc};
 use storage::CertificateStore;
 use store::Store;
-use tokio::sync::oneshot;
-use tokio::{sync::watch, task::JoinHandle};
+use tokio::{sync::oneshot, sync::watch, task::JoinHandle};
 use tower::ServiceBuilder;
 use tracing::info;
 use types::{
     error::DagError,
     metered_channel::{channel, Receiver, Sender},
-    BatchDigest, BatchMessage, Certificate, Header, HeaderDigest, PrimaryToPrimary,
-    PrimaryToPrimaryServer, ReconfigureNotification, RoundVoteDigestPair, WorkerInfoResponse,
-    WorkerPrimaryError, WorkerPrimaryMessage, WorkerToPrimary, WorkerToPrimaryServer,
+    BatchDigest, BatchMessage, Certificate, CertificateDigest, Header, HeaderDigest,
+    PrimaryToPrimary, PrimaryToPrimaryServer, ReconfigureNotification, RoundVoteDigestPair,
+    WorkerInfoResponse, WorkerPrimaryError, WorkerPrimaryMessage, WorkerToPrimary,
+    WorkerToPrimaryServer,
 };
 pub use types::{PrimaryMessage, PrimaryWorkerMessage};
 
@@ -85,6 +85,7 @@ impl Primary {
         vote_digest_store: Store<PublicKey, RoundVoteDigestPair>,
         tx_consensus: Sender<Certificate>,
         rx_consensus: Receiver<Certificate>,
+        tx_confirmed_leaders: &watch::Sender<CertificateDigest>,
         tx_get_block_commands: Sender<BlockCommand>,
         rx_get_block_commands: Receiver<BlockCommand>,
         dag: Option<Arc<Dag>>,
@@ -451,6 +452,7 @@ impl Primary {
                 parameters.consensus_api_grpc.socket_addr,
                 tx_get_block_commands,
                 tx_block_removal_commands,
+                tx_confirmed_leaders,
                 parameters.consensus_api_grpc.get_collections_timeout,
                 parameters.consensus_api_grpc.remove_collections_timeout,
                 block_synchronizer_handler,

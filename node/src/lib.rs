@@ -183,6 +183,9 @@ impl Node {
         let (tx_get_block_commands, rx_get_block_commands) =
             metered_channel::channel(Self::CHANNEL_CAPACITY, &tx_get_block_commands_counter);
 
+        // Allows the consensus to broadcast selected leaders
+        let (tx_confirmed_leaders, _) = watch::channel(16);
+
         // Compute the public key of this authority.
         let name = keypair.public().clone();
         let mut handles = Vec::new();
@@ -207,6 +210,7 @@ impl Node {
                 &tx_reconfigure,
                 rx_new_certificates,
                 tx_consensus.clone(),
+                tx_confirmed_leaders,
                 registry,
             )
             .await?;
@@ -243,6 +247,7 @@ impl Node {
             store.vote_digest_store.clone(),
             tx_new_certificates,
             /* rx_consensus */ rx_consensus,
+            rx_confirmed_leaders,
             tx_get_block_commands,
             rx_get_block_commands,
             /* dag */ dag,
@@ -287,6 +292,7 @@ impl Node {
         tx_reconfigure: &watch::Sender<ReconfigureNotification>,
         rx_new_certificates: metered_channel::Receiver<Certificate>,
         tx_feedback: metered_channel::Sender<Certificate>,
+        tx_confirmed_leaders: &watch::Sender<CertificateDigest>,
         registry: &Registry,
     ) -> SubscriberResult<Vec<JoinHandle<()>>>
     where
@@ -335,6 +341,7 @@ impl Node {
             /* rx_primary */ rx_new_certificates,
             /* tx_primary */ tx_feedback,
             /* tx_output */ tx_sequence,
+            tx_confirmed_leaders,
             ordering_engine,
             consensus_metrics.clone(),
             parameters.gc_depth,

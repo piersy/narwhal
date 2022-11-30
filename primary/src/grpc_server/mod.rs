@@ -13,9 +13,13 @@ use consensus::dag::Dag;
 use crypto::PublicKey;
 use multiaddr::Multiaddr;
 use std::{sync::Arc, time::Duration};
+use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tracing::{error, info};
-use types::{metered_channel::Sender, ConfigurationServer, ProposerServer, ValidatorServer};
+use types::{
+    metered_channel::Sender, CertificateDigest, ConfigurationServer, ProposerServer,
+    ValidatorServer,
+};
 
 mod configuration;
 pub mod metrics;
@@ -28,6 +32,7 @@ pub struct ConsensusAPIGrpc<SynchronizerHandler: Handler + Send + Sync + 'static
     socket_address: Multiaddr,
     tx_get_block_commands: Sender<BlockCommand>,
     tx_block_removal_commands: Sender<BlockRemoverCommand>,
+    tx_confirmed_leaders: &'static watch::Sender<CertificateDigest>,
     get_collections_timeout: Duration,
     remove_collections_timeout: Duration,
     block_synchronizer_handler: Arc<SynchronizerHandler>,
@@ -43,6 +48,7 @@ impl<SynchronizerHandler: Handler + Send + Sync + 'static> ConsensusAPIGrpc<Sync
         socket_address: Multiaddr,
         tx_get_block_commands: Sender<BlockCommand>,
         tx_block_removal_commands: Sender<BlockRemoverCommand>,
+        tx_confirmed_leaders: &watch::Sender<CertificateDigest>,
         get_collections_timeout: Duration,
         remove_collections_timeout: Duration,
         block_synchronizer_handler: Arc<SynchronizerHandler>,
@@ -56,6 +62,7 @@ impl<SynchronizerHandler: Handler + Send + Sync + 'static> ConsensusAPIGrpc<Sync
                 socket_address,
                 tx_get_block_commands,
                 tx_block_removal_commands,
+                tx_confirmed_leaders,
                 get_collections_timeout,
                 remove_collections_timeout,
                 block_synchronizer_handler,
@@ -73,6 +80,7 @@ impl<SynchronizerHandler: Handler + Send + Sync + 'static> ConsensusAPIGrpc<Sync
         let narwhal_validator = NarwhalValidator::new(
             self.tx_get_block_commands.to_owned(),
             self.tx_block_removal_commands.to_owned(),
+            self.tx_confirmed_leaders,
             self.get_collections_timeout,
             self.remove_collections_timeout,
             self.block_synchronizer_handler.clone(),

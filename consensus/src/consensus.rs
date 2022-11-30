@@ -185,6 +185,8 @@ pub struct Consensus<ConsensusProtocol> {
     tx_primary: metered_channel::Sender<Certificate>,
     /// Outputs the sequence of ordered certificates to the application layer.
     tx_output: metered_channel::Sender<ConsensusOutput>,
+    /// Outputs the certificate digest of the leader confirmed by each consensus execution.
+    tx_confirmed_leaders: watch::Sender<CertificateDigest>,
 
     /// The (global) consensus index. We assign one index to each sequenced certificate. this is
     /// helpful for clients.
@@ -210,6 +212,7 @@ where
         rx_primary: metered_channel::Receiver<Certificate>,
         tx_primary: metered_channel::Sender<Certificate>,
         tx_output: metered_channel::Sender<ConsensusOutput>,
+        tx_confirmed_leaders: watch::Sender<CertificateDigest>,
         protocol: Protocol,
         metrics: Arc<ConsensusMetrics>,
         gc_depth: Round,
@@ -225,6 +228,7 @@ where
                 rx_primary,
                 tx_primary,
                 tx_output,
+                tx_confirmed_leaders,
                 consensus_index,
                 protocol,
                 metrics,
@@ -294,9 +298,15 @@ where
                     }
 
                     // Process the certificate using the selected consensus protocol.
+                    //
+                    // This is where i need to send a notification I believe for the first element
+                    // in the sequence
                     let sequence =
                         self.protocol
                             .process_certificate(&mut state, self.consensus_index, certificate)?;
+                    if sequence.len() >= 1 {
+                        _ = self.tx_confirmed_leaders.send(sequence[0].certificate.digest());
+                    }
 
                     // Update the consensus index.
                     self.consensus_index += sequence.len() as u64;

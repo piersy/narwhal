@@ -136,6 +136,8 @@ service Validator {
     rpc RemoveCollections(RemoveCollectionsRequest) returns (Empty);
     // Returns collections along a DAG walk with a well-defined starting point.
     rpc ReadCausal(ReadCausalRequest) returns (ReadCausalResponse);
+    // Subscribes to a stream of collection ids which have been sequenced by consensus.
+    rpc SubscribeSequencedCollections(Empty) returns (stream CertificateDigest);
 }
 
 /// The API that hosts the endpoints that should be used to help
