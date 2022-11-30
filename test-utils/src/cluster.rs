@@ -494,6 +494,7 @@ pub struct AuthorityDetails {
     pub id: usize,
     pub name: PublicKey,
     pub key_pair: KeyPair,
+    pub parameters: Parameters,
     internal: Arc<RwLock<AuthorityDetailsInternal>>,
 }
 
@@ -507,6 +508,7 @@ impl Clone for AuthorityDetails {
             id: self.id.clone(),
             name: self.name.clone(),
             key_pair: self.key_pair.copy(),
+            parameters: self.parameters.clone(),
             internal: self.internal.clone(),
         }
     }
@@ -571,6 +573,7 @@ impl AuthorityDetails {
             id,
             name,
             key_pair: key_pair.copy(),
+            parameters: parameters,
             internal: Arc::new(RwLock::new(internal)),
         }
     }

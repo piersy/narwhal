@@ -305,6 +305,7 @@ where
                         self.protocol
                             .process_certificate(&mut state, self.consensus_index, certificate)?;
                     if sequence.len() >= 1 {
+                        println!("sending confirmed leader {:?}", sequence[0].certificate.digest());
                         _ = self.tx_confirmed_leaders.send(sequence[0].certificate.digest());
                     }
 

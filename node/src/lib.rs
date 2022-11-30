@@ -184,7 +184,8 @@ impl Node {
             metered_channel::channel(Self::CHANNEL_CAPACITY, &tx_get_block_commands_counter);
 
         // Allows the consensus to broadcast selected leaders
-        let (tx_confirmed_leaders, _) = watch::channel(16);
+        let (tx_confirmed_leaders, rx_confirmed_leaders) =
+            watch::channel(CertificateDigest::default());
 
         // Compute the public key of this authority.
         let name = keypair.public().clone();
@@ -292,7 +293,7 @@ impl Node {
         tx_reconfigure: &watch::Sender<ReconfigureNotification>,
         rx_new_certificates: metered_channel::Receiver<Certificate>,
         tx_feedback: metered_channel::Sender<Certificate>,
-        tx_confirmed_leaders: &watch::Sender<CertificateDigest>,
+        tx_confirmed_leaders: watch::Sender<CertificateDigest>,
         registry: &Registry,
     ) -> SubscriberResult<Vec<JoinHandle<()>>>
     where

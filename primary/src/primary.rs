@@ -85,7 +85,7 @@ impl Primary {
         vote_digest_store: Store<PublicKey, RoundVoteDigestPair>,
         tx_consensus: Sender<Certificate>,
         rx_consensus: Receiver<Certificate>,
-        tx_confirmed_leaders: &watch::Sender<CertificateDigest>,
+        rx_confirmed_leaders: watch::Receiver<CertificateDigest>,
         tx_get_block_commands: Sender<BlockCommand>,
         rx_get_block_commands: Receiver<BlockCommand>,
         dag: Option<Arc<Dag>>,
@@ -445,24 +445,24 @@ impl Primary {
             P2pNetwork::new(network),
         );
 
-        let consensus_api_handle = if !internal_consensus {
-            // Spawn a grpc server to accept requests from external consensus layer.
-            Some(ConsensusAPIGrpc::spawn(
-                name.clone(),
-                parameters.consensus_api_grpc.socket_addr,
-                tx_get_block_commands,
-                tx_block_removal_commands,
-                tx_confirmed_leaders,
-                parameters.consensus_api_grpc.get_collections_timeout,
-                parameters.consensus_api_grpc.remove_collections_timeout,
-                block_synchronizer_handler,
-                dag,
-                committee.clone(),
-                endpoint_metrics,
-            ))
-        } else {
-            None
-        };
+        // let consensus_api_handle = if !internal_consensus {
+        // Spawn a grpc server to accept requests from external consensus layer.
+        let consensus_api_handle = Some(ConsensusAPIGrpc::spawn(
+            name.clone(),
+            parameters.consensus_api_grpc.socket_addr,
+            tx_get_block_commands,
+            tx_block_removal_commands,
+            rx_confirmed_leaders,
+            parameters.consensus_api_grpc.get_collections_timeout,
+            parameters.consensus_api_grpc.remove_collections_timeout,
+            block_synchronizer_handler,
+            dag,
+            committee.clone(),
+            endpoint_metrics,
+        ));
+        // } else {
+        //     None
+        // };
 
         // NOTE: This log entry is used to compute performance.
         info!(
